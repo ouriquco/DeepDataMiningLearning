@@ -2,8 +2,10 @@ import torch
 import torchvision
 import numpy as np
 from torchvision import datasets, transforms
+from coco_utils import get_coco
+import trainutils
 #from DeepDataMiningLearning.detection.coco_utils import get_coco
-from DeepDataMiningLearning.detection import trainutils
+#from DeepDataMiningLearning.detection import trainutils
 import os
 from typing import Any, Callable, List, Optional, Tuple
 from PIL import Image

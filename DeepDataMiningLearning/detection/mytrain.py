@@ -8,12 +8,19 @@ import torch.utils.data
 import torchvision
 import torchvision.models.detection
 
-from DeepDataMiningLearning.detection import utils
-from DeepDataMiningLearning.detection.trainutils import create_aspect_ratio_groups, GroupedBatchSampler
+import utils
 
-from DeepDataMiningLearning.detection.dataset import get_dataset #get_cocodataset, get_kittidataset, get_transform
-from DeepDataMiningLearning.detection.models import create_detectionmodel #get_torchvision_detection_models, modify_fasterrcnnheader
-from DeepDataMiningLearning.detection.myevaluator import simplemodelevaluate, modelevaluate
+from trainutils import create_aspect_ratio_groups, GroupedBatchSampler
+from dataset import get_dataset
+from models import create_detectionmodel
+from myevaluator import simplemodelevaluate, modelevaluate
+
+# from DeepDataMiningLearning.detection import utils
+# from DeepDataMiningLearning.detection.trainutils import create_aspect_ratio_groups, GroupedBatchSampler
+
+# from DeepDataMiningLearning.detection.dataset import get_dataset #get_cocodataset, get_kittidataset, get_transform
+# from DeepDataMiningLearning.detection.models import create_detectionmodel #get_torchvision_detection_models, modify_fasterrcnnheader
+# from DeepDataMiningLearning.detection.myevaluator import simplemodelevaluate, modelevaluate
 
 try:
     from torchinfo import summary
@@ -44,7 +51,7 @@ def get_args_parser(add_help=True):
 
     parser = argparse.ArgumentParser(description="PyTorch Detection Training", add_help=add_help)
 
-    parser.add_argument("--data-path", default="/data/cmpe249-fa23/WaymoCOCO/", type=str, help="dataset path") #"/data/cmpe249-fa23/WaymoCOCO/"
+    parser.add_argument("--data-path", default="/data/cmpe258-sp24/010892622/data/WaymoCOCO", type=str, help="dataset path") #"/data/cmpe249-fa23/WaymoCOCO/"
     parser.add_argument("--annotationfile", default="", type=str, help="dataset annotion file path, e.g., coco json file") #annotations_train200new.json
     parser.add_argument(
         "--dataset",

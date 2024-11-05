@@ -20,7 +20,8 @@ import psutil
 from itertools import repeat
 import contextlib
 from tqdm import tqdm
-from DeepDataMiningLearning.detection.modules.yolotransform import LetterBox
+from modules.yolotransform import LetterBox
+# from DeepDataMiningLearning.detection.modules.yolotransform import LetterBox
 # PyTorch Multi-GPU DDP Constants
 RANK = int(os.getenv('RANK', -1))
 LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html

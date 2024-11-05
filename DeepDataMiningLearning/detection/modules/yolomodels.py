@@ -9,16 +9,24 @@ import torch.nn as nn
 import yaml
 import re
 from typing import Dict, List, Optional, Tuple, Union
-
-from DeepDataMiningLearning.detection.modules.block import (AIFI, C1, C2, C3, C3TR, SPP, SPPF, Bottleneck, BottleneckCSP, C2f, C3Ghost, C3x,
+from modules.block import (AIFI, C1, C2, C3, C3TR, SPP, SPPF, Bottleneck, BottleneckCSP, C2f, C3Ghost, C3x,
                     Concat, Conv, Conv2, ConvTranspose, DWConv, DWConvTranspose2d,
                     Focus, GhostBottleneck, GhostConv, HGBlock, HGStem, RepC3, RepConv, MP, SPPCSPC )
-from DeepDataMiningLearning.detection.modules.utils import extract_filename, LOGGER, make_divisible, non_max_suppression, scale_boxes #colorstr, 
-from DeepDataMiningLearning.detection.modules.head import Detect, IDetect, Classify, Pose, RTDETRDecoder, Segment
+from modules.utils import extract_filename, LOGGER, make_divisible, non_max_suppression, scale_boxes #colorstr, 
+from modules.head import Detect, IDetect, Classify, Pose, RTDETRDecoder, Segment
 #Detect, Classify, Pose, RTDETRDecoder, Segment
-from DeepDataMiningLearning.detection.modules.lossv8 import myv8DetectionLoss
-from DeepDataMiningLearning.detection.modules.lossv7 import myv7DetectionLoss
-from DeepDataMiningLearning.detection.modules.anchor import check_anchor_order
+from modules.lossv8 import myv8DetectionLoss
+from modules.lossv7 import myv7DetectionLoss
+from modules.anchor import check_anchor_order
+# from DeepDataMiningLearning.detection.modules.block import (AIFI, C1, C2, C3, C3TR, SPP, SPPF, Bottleneck, BottleneckCSP, C2f, C3Ghost, C3x,
+#                     Concat, Conv, Conv2, ConvTranspose, DWConv, DWConvTranspose2d,
+#                     Focus, GhostBottleneck, GhostConv, HGBlock, HGStem, RepC3, RepConv, MP, SPPCSPC )
+# from DeepDataMiningLearning.detection.modules.utils import extract_filename, LOGGER, make_divisible, non_max_suppression, scale_boxes #colorstr, 
+# from DeepDataMiningLearning.detection.modules.head import Detect, IDetect, Classify, Pose, RTDETRDecoder, Segment
+# #Detect, Classify, Pose, RTDETRDecoder, Segment
+# from DeepDataMiningLearning.detection.modules.lossv8 import myv8DetectionLoss
+# from DeepDataMiningLearning.detection.modules.lossv7 import myv7DetectionLoss
+# from DeepDataMiningLearning.detection.modules.anchor import check_anchor_order
 
 
 
@@ -438,8 +446,11 @@ def load_checkpoint(model, ckpt_file, fp16=False):
     model.half() if fp16 else model.float()
     return model
 
-import DeepDataMiningLearning.detection.transforms as T
-from DeepDataMiningLearning.detection.modules.yolotransform import LetterBox
+# import DeepDataMiningLearning.detection.transforms as T
+# from DeepDataMiningLearning.detection.modules.yolotransform import LetterBox
+
+import transforms as T
+from modules.yolotransform import LetterBox
 from PIL import Image
 def get_transformsimple(train):
     transforms = []
@@ -473,7 +484,8 @@ def preprocess_img(imagepath, opencvread=True, fp16=False):
 import os
 from collections import OrderedDict
 import cv2
-from DeepDataMiningLearning.detection.modules.yolotransform import YoloTransform
+from modules.yolotransform import YoloTransform
+# from DeepDataMiningLearning.detection.modules.yolotransform import YoloTransform
 from torchvision.utils import draw_bounding_boxes
 from torchvision.transforms.functional import to_pil_image
 import torchvision

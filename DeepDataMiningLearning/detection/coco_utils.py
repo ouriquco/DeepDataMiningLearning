@@ -3,7 +3,8 @@ import os
 import torch
 import torch.utils.data
 import torchvision
-import DeepDataMiningLearning.detection.transforms as T
+import transforms as T
+# import DeepDataMiningLearning.detection.transforms as T
 from pycocotools import mask as coco_mask
 from pycocotools.coco import COCO
 

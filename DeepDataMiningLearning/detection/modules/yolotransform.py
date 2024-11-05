@@ -5,7 +5,8 @@ from typing import Dict, List, Optional, Tuple, Union
 import torch
 import torchvision
 from torch import nn, Tensor
-from DeepDataMiningLearning.detection.modules.utils import LOGGER, make_divisible, yolov8_non_max_suppression, non_max_suppression, scale_boxes, xyxy2xywh, xywh2xyxy
+from modules.utils import LOGGER, make_divisible, yolov8_non_max_suppression, non_max_suppression, scale_boxes, xyxy2xywh, xywh2xyxy
+# from DeepDataMiningLearning.detection.modules.utils import LOGGER, make_divisible, yolov8_non_max_suppression, non_max_suppression, scale_boxes, xyxy2xywh, xywh2xyxy
 
 # same_shapes = all(x.shape == im[0].shape for x in im)
 # [self.letterbox(image=x) for x in im]

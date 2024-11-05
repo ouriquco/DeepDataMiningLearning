@@ -9,8 +9,8 @@ from pathlib import Path
 #import matplotlib.pyplot as plt
 import numpy as np
 import torch
-
-from DeepDataMiningLearning.detection.modules.utils import LOGGER, SimpleClass #, TryExcept, plt_settings
+from modules.utils import LOGGER, SimpleClass #, TryExcept, plt_settings
+# from DeepDataMiningLearning.detection.modules.utils import LOGGER, SimpleClass #, TryExcept, plt_settings
 
 OKS_SIGMA = np.array([.26, .25, .25, .35, .35, .79, .79, .72, .72, .62, .62, 1.07, 1.07, .87, .87, .89, .89]) / 10.0
 

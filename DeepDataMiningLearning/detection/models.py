@@ -5,7 +5,8 @@ from torchvision.models import get_model, get_model_weights, get_weight, list_mo
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
-from DeepDataMiningLearning.detection.modules.yolomodels import create_yolomodel, freeze_yolomodel
+from modules.yolomodels import create_yolomodel, freeze_yolomodel
+# from DeepDataMiningLearning.detection.modules.yolomodels import create_yolomodel, freeze_yolomodel
 #from DeepDataMiningLearning.detection.modeling_rpnfasterrcnn import CustomRCNN
 import os
 from modeling_rpnfasterrcnn import CustomRCNN
@@ -216,6 +217,14 @@ def create_detectionmodel(modelname, num_classes=None, trainable_layers=0, ckpt_
         model, preprocess, classes=create_yolomodel(modelname, num_classes, ckpt_file, fp16, device, scale)
         model= freeze_yolomodel(model, freeze=[])
         #ckpt file is already loaded in create_yolomodel
+    ## Cody Ourique's added code 
+    elif modelname == 'fasterrcnn_mobilenet_v3_large_fpn':
+        model, preprocess, weights, classes = get_torchvision_detection_models(modelname)
+        if num_classes is not None and len(classes) != num_classes:
+            model = modify_fasterrcnnheader(model, num_classes, freeze=freezemodel)
+        if ckpt_file:
+            model = load_checkpoint(model, ckpt_file, fp16)
+    ## End of added code
     else:
         print('Model name not supported')
 

@@ -4,7 +4,8 @@ import datetime
 import os
 import time
 import numpy as np
-from DeepDataMiningLearning.detection import utils
+import utils
+# from DeepDataMiningLearning.detection import utils
 #from DeepDataMiningLearning.detection.coco_eval import CocoEvaluator
 #from DeepDataMiningLearning.detection.coco_utils import get_coco_api_from_dataset
 from pycocotools.coco import COCO #https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/coco.py
@@ -597,9 +598,12 @@ def vis_example(onedetection, imgtensor, filename='result.jpg'):
     # save a image using extension
     im = im.save(filename)
 
-from DeepDataMiningLearning.detection import utils
-from DeepDataMiningLearning.detection.dataset import get_dataset
-from DeepDataMiningLearning.detection.models import create_detectionmodel
+import utils
+from dataset import get_dataset
+from models import create_detectionmodel
+# from DeepDataMiningLearning.detection import utils
+# from DeepDataMiningLearning.detection.dataset import get_dataset
+# from DeepDataMiningLearning.detection.models import create_detectionmodel
 class args:
     data_path = '/data/cmpe249-fa23/coco/' #'/data/cmpe249-fa23/COCOoriginal/' # #'/data/cmpe249-fa23/WaymoCOCO/' #'/data/cmpe249-fa23/coco/'
     annotationfile = '/data/cmpe249-fa23/coco/train2017.txt'

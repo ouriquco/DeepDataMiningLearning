@@ -7,9 +7,11 @@ import torch.nn.functional as F
 
 #from utils.general import bbox_iou, bbox_alpha_iou, box_iou, box_giou, box_diou, box_ciou, xywh2xyxy
 #from utils.torch_utils import is_parallel
+from modules.metrics import bbox_iou
+from modules.utils import is_parallel, xywh2xyxy, bbox_alpha_iou, box_iou, box_giou, box_diou, box_ciou #bbox_iou
 
-from DeepDataMiningLearning.detection.modules.metrics import bbox_iou
-from DeepDataMiningLearning.detection.modules.utils import is_parallel, xywh2xyxy, bbox_alpha_iou, box_iou, box_giou, box_diou, box_ciou #bbox_iou
+# from DeepDataMiningLearning.detection.modules.metrics import bbox_iou
+# from DeepDataMiningLearning.detection.modules.utils import is_parallel, xywh2xyxy, bbox_alpha_iou, box_iou, box_giou, box_diou, box_ciou #bbox_iou
 
 
 #The smooth_BCE function helps to smooth the binary cross-entropy loss function 

@@ -156,7 +156,8 @@ class WaymoCOCODataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.ids)
 
-import DeepDataMiningLearning.detection.transforms as T
+import transforms as T
+# import DeepDataMiningLearning.detection.transforms as T
 def get_transformsimple(train):
     transforms = []
     transforms.append(T.PILToTensor())
