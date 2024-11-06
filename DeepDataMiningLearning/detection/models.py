@@ -10,6 +10,7 @@ from modules.yolomodels import create_yolomodel, freeze_yolomodel
 #from DeepDataMiningLearning.detection.modeling_rpnfasterrcnn import CustomRCNN
 import os
 from modeling_rpnfasterrcnn import CustomRCNN
+from modeling_convnext_fasterrcnn import create_model
 
 try:
     from torchinfo import summary
@@ -224,6 +225,9 @@ def create_detectionmodel(modelname, num_classes=None, trainable_layers=0, ckpt_
             model = modify_fasterrcnnheader(model, num_classes, freeze=freezemodel)
         if ckpt_file:
             model = load_checkpoint(model, ckpt_file, fp16)
+    elif modelname == ('convnext_fasterrcnn'):
+        model = create_model(num_classes=2, pretrained=True)
+
     ## End of added code
     else:
         print('Model name not supported')

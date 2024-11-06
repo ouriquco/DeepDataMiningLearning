@@ -20,9 +20,7 @@ MACHINENAME='HPC'
 USE_AMP=True #AUTOMATIC MIXED PRECISION
 
 def arg_parse():
-
-    
+    pass
 
 def main(args):
-
     pass
