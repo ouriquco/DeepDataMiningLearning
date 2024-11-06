@@ -337,7 +337,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, sc
         images = list(image.to(device) for image in images) #list of [3, 1280, 1920]
         targets = [{k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in t.items()} for t in targets] #tuple to list
         #with torch.cuda.amp.autocast(enabled=scaler is not None):
-        with torch.amp.autocast(enabled=scaler is not None):
+        with torch.amp.autocast(device_type='cuda', enabled=scaler is not None):
             loss_dict = model(images, targets)
             losses = sum(loss for loss in loss_dict.values()) #single value
 
