@@ -389,7 +389,7 @@ if __name__ == "__main__":
         weights = ''
         test_only = False
     
-    rootPath = '/data/cmpe249-fa23/torchvisiondata/Kitti'
+    rootPath = '/content/data/Kitti'
     is_train = True
     kittidataset = MyKittiDetection(rootPath, train=True, transform=get_transformsimple(is_train))
     print(kittidataset.INSTANCE_CATEGORY_NAMES)
