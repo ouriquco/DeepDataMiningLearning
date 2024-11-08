@@ -6,23 +6,94 @@ import torch
 import torch.nn as nn
 import torchvision
 from torchvision.models.detection import FasterRCNN
+from torchvision.models import convnext_tiny, ConvNeXt_Tiny_Weights
 from torchvision.models.detection.rpn import AnchorGenerator
 
-class ConvNextFasterRCNN(nn.Module):
-    def __init__(
-        self,
-        num_classes: int,
-        pretrained_backbone: bool = False,
-        trainable_backbone_layers: int = 3,
-        **kwargs
-    ):
+
+from torchvision.models import convnext_tiny, ConvNeXt_Tiny_Weights
+from torch import nn
+import torch.nn.functional as F
+
+class FPN_PAN(nn.Module):
+    def __init__(self, backbone, in_channels_list, out_channels):
         super().__init__()
         
-        # Load ConvNeXT backbone
-        backbone = torchvision.models.convnext_tiny(
-            pretrained=pretrained_backbone
-        ).features
+        # FPN part
+        self.inner_blocks = nn.ModuleList()
+        self.layer_blocks = nn.ModuleList()
         
+        for in_channels in in_channels_list:
+            inner_block = nn.Conv2d(in_channels, out_channels, 1)
+            layer_block = nn.Conv2d(out_channels, out_channels, 3, padding=1)
+            self.inner_blocks.append(inner_block)
+            self.layer_blocks.append(layer_block)
+            
+        # PAN part (bottom-up path)
+        self.pan_blocks = nn.ModuleList()
+        for _ in range(len(in_channels_list) - 1):
+            pan_block = nn.Sequential(
+                nn.Conv2d(out_channels, out_channels, 3, stride=2, padding=1),
+                nn.LayerNorm([out_channels, None, None]),  # ConvNeXt uses LayerNorm
+                nn.GELU()  # ConvNeXt uses GELU
+            )
+            self.pan_blocks.append(pan_block)
+            
+    def forward(self, x):
+        # Bottom-up pathway (FPN)
+        last_inner = self.inner_blocks[-1](x[-1])
+        results = []
+        results.append(self.layer_blocks[-1](last_inner))
+        
+        for idx in range(len(x) - 2, -1, -1):
+            inner_lateral = self.inner_blocks[idx](x[idx])
+            inner_top_down = F.interpolate(last_inner, size=inner_lateral.shape[-2:], mode='nearest')
+            last_inner = inner_lateral + inner_top_down
+            results.insert(0, self.layer_blocks[idx](last_inner))
+            
+        # Top-down pathway (PAN)
+        pan_results = [results[0]]
+        last_pan = results[0]
+        
+        for idx in range(len(self.pan_blocks)):
+            pan_feat = self.pan_blocks[idx](last_pan)
+            last_pan = pan_feat + results[idx + 1]  # Skip connection
+            pan_results.append(last_pan)
+            
+        return pan_results
+
+def create_backbone_with_fpn_pan(trainable_layers=3):
+    # Create ConvNeXt-Tiny backbone
+    weights = ConvNeXt_Tiny_Weights.DEFAULT
+    backbone = convnext_tiny(weights=weights).features
+    
+    # ConvNeXt-Tiny channel dimensions for each stage
+    in_channels_list = [96, 192, 384, 768]  # These are the channel dimensions for each stage
+    
+    # Create FPN-PAN
+    fpn_pan = FPN_PAN(
+        backbone=backbone,
+        in_channels_list=in_channels_list,
+        out_channels=256  # You can adjust this based on your needs
+    )
+    
+    return fpn_pan
+
+
+
+class ConvNextFasterRCNN(nn.Module):
+    def __init__(self, num_classes: int = 2, pretrained_backbone: bool = False, trainable_backbone_layers: int = 3, **kwargs):
+        super().__init__()
+        
+        # # Load ConvNeXT backbone
+        # backbone = torchvision.models.convnext_tiny(
+        #     pretrained=pretrained_backbone
+        # ).features
+        norm_layer = nn.LayerNorm
+                # Get weights
+        weights = ConvNeXt_Tiny_Weights.DEFAULT  # or ConvNeXt_Tiny_Weights.IMAGENET1K_V1
+
+        # Create backbone
+        backbone = convnext_tiny(weights=weights, norm_layer=norm_layer)
         # Set output channels
         backbone.out_channels = 768
         
@@ -41,7 +112,7 @@ class ConvNextFasterRCNN(nn.Module):
         # Define RPN anchor generator
         rpn_anchor_generator = AnchorGenerator(
             sizes=((32, 64, 128, 256, 512),),
-            aspect_ratios=((0.5, 1.0, 2.0),) * 5
+            aspect_ratios=((0.5, 1.0, 2.0),)
         )
         
         # Define RoI pooling
