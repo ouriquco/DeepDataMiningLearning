@@ -225,9 +225,25 @@ def create_detectionmodel(modelname, num_classes=None, trainable_layers=0, ckpt_
             model = modify_fasterrcnnheader(model, num_classes, freeze=freezemodel)
         if ckpt_file:
             model = load_checkpoint(model, ckpt_file, fp16)
-    elif modelname == 'convnext_fasterrcnn':
-        model = create_model(num_classes=2, pretrained=True)
+    elif modelname.startswith('customrcnn_convnext'):
+        ## customrcnn_convnex_<tiny>_weights # use tiny, base, large
+        ## customrcnn_convnext_<tiny>
+        opts = ['tiny', 'base','large']
+        names = modelname.split('_')
         
+        if names[0] == 'customrcnn' and names[1] == 'convnext' and names[2] in opts and names[-1] == 'weights':
+            backbone_name = ' '.join(names[2], names[3])
+            model=CustomRCNN(backbone_modulename=backbone_name,trainable_layers=trainable_layers,num_classes=num_classes,out_channels=256,min_size=800,max_size=1333)
+            if ckpt_file:
+                model = load_checkpoint(model, ckpt_file, fp16)
+        elif names[0] == 'customrcnn' and names[1] == 'convnext' and names[2] in opts:
+            backbone_name = names[2]
+            model=CustomRCNN(backbone_modulename=backbone_name,trainable_layers=trainable_layers,num_classes=num_classes,out_channels=256,min_size=800,max_size=1333)
+            if ckpt_file:
+                model = load_checkpoint(model, ckpt_file, fp16)
+        else:
+            print("Model name not supported")
+
     ## End of added code
     else:
         print('Model name not supported')

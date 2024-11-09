@@ -25,6 +25,7 @@ from torchvision.models import get_model, get_model_weights, get_weight, list_mo
 from torchvision.ops.feature_pyramid_network import ExtraFPNBlock, FeaturePyramidNetwork, LastLevelMaxPool
 #from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from backbone import MyBackboneWithFPN
+from backbone_convnext_fpnpan import BackboneWithFPNAndPAN, CustomBackboneWithFPNPAN, create_convnext_fpnpan
 from detectiontransform import DetectionTransform
 # from DeepDataMiningLearning.detection.backbone import MyBackboneWithFPN
 # from DeepDataMiningLearning.detection.detectiontransform import DetectionTransform
@@ -1145,7 +1146,25 @@ class CustomRCNN(nn.Module):
 
         #Backbone
         #self.body, self.fpn = self.create_fpnbackbone(backbone_modulename)
-        self.backbone = MyBackboneWithFPN(backbone_modulename,trainable_layers, out_channels)
+
+        # Cody Ourqiue's code addition
+        
+        ## customrcnn_convnex_<tiny>_weights # use tiny, base, large
+        ## customrcnn_convnext_<tiny>
+        opts = ['tiny', 'base','large']
+        names = backbone_modulename.split()
+
+        if names[-1] == 'weights':
+            backbone_modulename = names[0]
+            self.backbone = BackboneWithFPNAndPAN(backbone_modulename,trainable_layers, out_channels)
+        elif names[0] in opts:
+            backbone_modulename = names[0]
+            self.backbone = create_convnext_fpnpan(backbone_modulename)
+        else:
+            self.backbone = MyBackboneWithFPN(backbone_modulename,trainable_layers, out_channels)
+
+        # End of code addition
+
         if not hasattr(self.backbone, "out_channels"):
             print("error")
         self.out_channels = self.backbone.out_channels #256
