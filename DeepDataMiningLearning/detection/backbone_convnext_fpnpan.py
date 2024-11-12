@@ -52,7 +52,6 @@ class CustomBackboneWithFPNPAN(nn.Module):
             drop_p=drop_p
         )
         
-        # Add feature extraction hooks to get intermediate features
         self.features = {}
         for i, stage in enumerate(self.body.stages):
             stage.register_forward_hook(self._get_features_hook(f"stage_{i}"))
@@ -61,7 +60,7 @@ class CustomBackboneWithFPNPAN(nn.Module):
             extra_blocks = LastLevelMaxPool()
 
         self.fpn = FeaturePyramidNetwork(
-            in_channels_list=widths,  # Use widths as channel list
+            in_channels_list=widths,  
             out_channels=out_channels,
             extra_blocks=extra_blocks,
             norm_layer=norm_layer,
@@ -82,16 +81,12 @@ class CustomBackboneWithFPNPAN(nn.Module):
         return hook
 
     def forward(self, x: Tensor) -> Dict[str, Tensor]:
-        # Clear previous features
         self.features.clear()
         
-        # Forward pass through backbone
         _ = self.body(x)
         
-        # Create ordered dict of features
         x = {str(i): self.features[f"stage_{i}"] for i in range(len(self.body.stages))}
         
-        # FPN forward pass
         fpn_outs = self.fpn(x)
         
         # PAN forward pass
@@ -125,16 +120,15 @@ class BackboneWithFPNAndPAN(nn.Module):
         super().__init__()
 
         # model_name == 'convnext_large'
-        # Get ConvNeXt model based on variant
         if model_name == 'base':
             backbone = torchvision.models.convnext_base(weights="DEFAULT").features
-            in_channels_list = [128, 256, 512, 1024]  # Base channels
+            in_channels_list = [128, 256, 512, 1024]  
         elif model_name == 'large':
             backbone = torchvision.models.convnext_large(weights="DEFAULT").features
-            in_channels_list = [192, 384, 768, 1536]  # Large channels
+            in_channels_list = [192, 384, 768, 1536]  
         else:  # convnext_tiny
             backbone = torchvision.models.convnext_tiny(weights="DEFAULT").features
-            in_channels_list = [96, 192, 384, 768]  # Tiny channels
+            in_channels_list = [96, 192, 384, 768]  
 
 
         # Set trainable layers
