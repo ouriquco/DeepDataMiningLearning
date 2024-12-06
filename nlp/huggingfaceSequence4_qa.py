@@ -19,6 +19,9 @@ import numpy as np
 import random
 import json
 import os
+
+from huggingfaceQA import QAinference
+
 valkey="test"#"validation"
 #Dualevaluation=True
 
@@ -672,8 +675,9 @@ if __name__ == "__main__":
                     help='output path')
     parser.add_argument('--traintag', type=str, default="1124",
                     help='Name the current training')
-    parser.add_argument('--training', default=True, action='store_true',
+    parser.add_argument('--training', default=False, action='store_true',
                     help='Perform training')
+    print()
     parser.add_argument('--usehpc', default=False, action='store_true',
                     help='Use HPC')
     parser.add_argument('--useHFaccelerator', default=False, action='store_true',

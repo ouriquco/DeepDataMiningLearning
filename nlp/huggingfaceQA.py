@@ -1,12 +1,13 @@
 #https://huggingface.co/transformers/v4.1.1/custom_datasets.html
 from datasets import load_dataset
-from datasets import load_metric
+# from datasets import load_metric
 import torch
 import json
 from pathlib import Path
 import os
-from transformers import DistilBertTokenizerFast, AutoTokenizer
-from transformers import DistilBertForQuestionAnswering, AutoModelForQuestionAnswering
+import gradio as gr
+from transformers import DistilBertTokenizerFast, AutoTokenizer, RobertaTokenizer
+from transformers import DistilBertForQuestionAnswering, AutoModelForQuestionAnswering, RobertaForQuestionAnswering
 from transformers import get_scheduler
 from transformers import pipeline
 from transformers import DefaultDataCollator
@@ -397,6 +398,52 @@ def compute_metrics(start_logits, end_logits, features, examples):
     theoretical_answers = [{"id": ex["id"], "answers": ex["answers"]} for ex in examples]
     return metric.compute(predictions=predicted_answers, references=theoretical_answers)
     
+# Cody Ourique added code
+def run_test_qa(model,tokenizer,device):
+    #Q1
+    context = """There are six levels of vehicle automation, ranging from Level 0 to Level 5. At Level 0, 
+    there is no driving automation, and the human driver is responsible for all driving tasks. At Level 1, 
+    the car can assist with either steering or acceleration/braking but not both simultaneously. 
+    Level 2 introduces partial automation, where the car can manage both steering and acceleration/braking at the same time, 
+    but the driver must remain attentive. At Level 3, conditional automation allows the car to handle all driving tasks in specific conditions, 
+    but the driver must be ready to take over when required. Level 4 enables high automation in limited conditions without requiring driver intervention, 
+    while Level 5 represents full automation where no human input is needed under any conditions."""
+
+    question = "What is the level of automation where no human input is required?"
+    answers=QAinference(model, tokenizer, question, context, device, usepipeline=True)
+
+    #Q2
+    context = """Autonomous vehicles rely on a combination of sensors to navigate their environment. 
+    Radar sensors monitor the position of nearby vehicles, while video cameras detect traffic lights, 
+    road signs, and pedestrians. Lidar sensors use light pulses to estimate distances and recognize lane markings. 
+    Ultrasonic sensors are used for close-range detection, such as identifying curbs and other vehicles during parking maneuvers."""
+
+    question = "What type of sensor is used to detect lane markings?"
+    answers=QAinference(model, tokenizer, question, context, device, usepipeline=True)
+
+def answer_questions(context, question):
+    answer = QAinference(model, tokenizer, question, context, device, usepipeline=True)
+    return answer
+
+def lauch_gradio_ui(model, tokenizer, device):
+    with gr.Blocks() as qa_interface:
+        gr.Markdown("# Question Answering System")
+        gr.Markdown("Provide a context and ask a question. The model will extract the answer from the context.")
+    
+        with gr.Row():
+            context_input = gr.Textbox(label="Context", placeholder="Enter the context here...", lines=5)
+            question_input = gr.Textbox(label="Question", placeholder="Enter your question here...")
+        
+        answer_output = gr.Textbox(label="Answer", interactive=False)
+        
+        submit_button = gr.Button("Get Answer")
+
+        submit_button.click(fn=answer_questions, inputs=[context_input, question_input], outputs=answer_output)
+
+    # Launch the interface
+    qa_interface.launch()
+    # Cody Ourique added code
+
 
 if __name__ == "__main__":
     import argparse
@@ -407,13 +454,17 @@ if __name__ == "__main__":
                     help='data name: imdb, conll2003, "glue", "mrpc" ')
     parser.add_argument('--data_path', type=str, default=r"E:\Dataset\NLPdataset\squad",
                     help='path to get data')
+    # Cody Ourique added code
     parser.add_argument('--model_checkpoint', type=str, default="distilbert-base-uncased",
-                    help='Model checkpoint name from https://huggingface.co/models, "bert-base-cased"')
+                    help='Model checkpoint name from https://huggingface.co/models, "bert-base-cased", "deepset/roberta-base-squad2"')
+    parser.add_argument('--from_checkpoint', type=bool, default=False,
+                help='Do you want to load the model from training checkpoint?')
+    # Cody Ourique added code
     parser.add_argument('--task', type=str, default="QA",
                     help='NLP tasks: sentiment, token_classifier, "sequence_classifier"')
     parser.add_argument('--outputdir', type=str, default="./output",
                     help='output path')
-    parser.add_argument('--training', type=bool, default=True,
+    parser.add_argument('--training', type=bool, default=False,
                     help='Perform training')
     parser.add_argument('--total_epochs', default=8, type=int, help='Total epochs to train the model')
     parser.add_argument('--save_every', default=2, type=int, help='How often to save a snapshot')
@@ -425,10 +476,20 @@ if __name__ == "__main__":
     task = args.task
     model_checkpoint = args.model_checkpoint
     global tokenizer
-    tokenizer = DistilBertTokenizerFast.from_pretrained(model_checkpoint)
+    #tokenizer = DistilBertTokenizerFast.from_pretrained(model_checkpoint)
     #tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 
-    model = DistilBertForQuestionAnswering.from_pretrained(model_checkpoint)
+
+    ## Cody Ourique's added code
+    if args.model_checkpoint == "deepset/roberta-base-squad2":
+        tokenizer = AutoTokenizer.from_pretrained(model_checkpoint, use_fast=True)
+        model = RobertaForQuestionAnswering.from_pretrained(model_checkpoint)
+    else:
+        tokenizer = DistilBertTokenizerFast.from_pretrained(model_checkpoint)
+        model = DistilBertForQuestionAnswering.from_pretrained(model_checkpoint)
+     ## Cody Ourique's added code
+
+    # model = DistilBertForQuestionAnswering.from_pretrained(model_checkpoint)
     #model = AutoModelForQuestionAnswering.from_pretrained(model_checkpoint) #"distilbert-base-uncased")
     #Some weights of DistilBertForQuestionAnswering were not initialized from the model checkpoint at distilbert-base-uncased and are newly initialized: ['qa_outputs.weight', 'qa_outputs.bias']
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -551,25 +612,28 @@ if __name__ == "__main__":
         outputpath=os.path.join(args.outputdir, task, args.data_name)
         tokenizer.save_pretrained(outputpath)
         torch.save(model.state_dict(), os.path.join(outputpath, 'savedmodel.pth'))
-    else:
+    elif args.from_checkpoint == True:
         #load saved model
         outputpath=os.path.join(args.outputdir, task, args.data_name)
         model.load_state_dict(torch.load(os.path.join(outputpath, 'savedmodel.pth')))
-        #model.to(device)
+        print('Debug')
+        model.to(device)
     
     model.eval()
     
+
+    run_test_qa(model,tokenizer,device)
     #Test QA
-    question = "How many programming languages does BLOOM support?"
-    context = "BLOOM has 176 billion parameters and can generate text in 46 languages natural languages and 13 programming languages."
-    answers=QAinference(model, tokenizer, question, context, device, usepipeline=False)
+    # question = "How many programming languages does BLOOM support?"
+    # context = "BLOOM has 176 billion parameters and can generate text in 46 languages natural languages and 13 programming languages."
+    # answers=QAinference(model, tokenizer, question, context, device, usepipeline=False)
     
-    context = """
-    🤗 Transformers is backed by the three most popular deep learning libraries — Jax, PyTorch and TensorFlow — with a seamless integration
-    between them. It's straightforward to train your models with one before loading them for inference with the other.
-    """
-    question = "Which deep learning libraries back 🤗 Transformers?"
-    answers=QAinference(model, tokenizer, question, context, device, usepipeline=False)
+    # context = """
+    # 🤗 Transformers is backed by the three most popular deep learning libraries — Jax, PyTorch and TensorFlow — with a seamless integration
+    # between them. It's straightforward to train your models with one before loading them for inference with the other.
+    # """
+    # question = "Which deep learning libraries back 🤗 Transformers?"
+    # answers=QAinference(model, tokenizer, question, context, device, usepipeline=False)
 
     num_val_steps = len(eval_dataloader)
     valprogress_bar = tqdm(range(num_val_steps))
@@ -592,6 +656,8 @@ if __name__ == "__main__":
         start_logits, end_logits, validation_dataset, raw_datasets[valkeyname]
     )
     print(metrics)
+
+    lauch_gradio_ui(model, tokenizer, device)
     # answer_start_index = outputs.start_logits.argmax()
     # answer_end_index = outputs.end_logits.argmax()
     # predict_answer_tokens = input_ids[0, answer_start_index : answer_end_index + 1]
