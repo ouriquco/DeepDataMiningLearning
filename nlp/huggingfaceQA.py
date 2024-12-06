@@ -1,11 +1,17 @@
 #https://huggingface.co/transformers/v4.1.1/custom_datasets.html
 from datasets import load_dataset
+import evaluate
+import json
+import matplotlib.pyplot as plt
+import numpy as np
+# import gradio as gr
+
 # from datasets import load_metric
 import torch
 import json
 from pathlib import Path
 import os
-import gradio as gr
+import streamlit as st
 from transformers import DistilBertTokenizerFast, AutoTokenizer, RobertaTokenizer
 from transformers import DistilBertForQuestionAnswering, AutoModelForQuestionAnswering, RobertaForQuestionAnswering
 from transformers import get_scheduler
@@ -16,7 +22,6 @@ from transformers import AdamW
 from tqdm.auto import tqdm
 import collections
 import numpy as np
-import evaluate
 
 def read_squad(path):
     path = Path(path)
@@ -425,25 +430,79 @@ def answer_questions(context, question):
     answer = QAinference(model, tokenizer, question, context, device, usepipeline=True)
     return answer
 
-def lauch_gradio_ui(model, tokenizer, device):
-    with gr.Blocks() as qa_interface:
-        gr.Markdown("# Question Answering System")
-        gr.Markdown("Provide a context and ask a question. The model will extract the answer from the context.")
+# def lauch_gradio_ui(model, tokenizer, device):
+#     with gr.Blocks() as qa_interface:
+#         gr.Markdown("# Question Answering System")
+#         gr.Markdown("Provide a context and ask a question. The model will extract the answer from the context.")
     
-        with gr.Row():
-            context_input = gr.Textbox(label="Context", placeholder="Enter the context here...", lines=5)
-            question_input = gr.Textbox(label="Question", placeholder="Enter your question here...")
+#         with gr.Row():
+#             context_input = gr.Textbox(label="Context", placeholder="Enter the context here...", lines=5)
+#             question_input = gr.Textbox(label="Question", placeholder="Enter your question here...")
         
-        answer_output = gr.Textbox(label="Answer", interactive=False)
+#         answer_output = gr.Textbox(label="Answer", interactive=False)
         
-        submit_button = gr.Button("Get Answer")
+#         submit_button = gr.Button("Get Answer")
 
-        submit_button.click(fn=answer_questions, inputs=[context_input, question_input], outputs=answer_output)
+#         submit_button.click(fn=answer_questions, inputs=[context_input, question_input], outputs=answer_output)
 
-    # Launch the interface
-    qa_interface.launch()
-    # Cody Ourique added code
+#     # Launch the interface
+#     qa_interface.launch(share=True)
 
+def launch_streamlit_ui(model, tokenizer, device):
+    st.title("Question Answering System")
+    st.markdown("Provide a context and ask a question. The model will extract an answer from the context.")
+    model_name = model.config._name_or_path  # Extract model name
+    st.sidebar.title("Model Information")
+    st.sidebar.markdown(f"**Model Name:** {model_name}")
+    context = st.text_area("Context", placeholder="Enter the context here...", height=200)
+    question = st.text_input("Question", placeholder="Enter your question here...")
+    if st.button("Get Answer"):
+        if context.strip() and question.strip():
+            # Perform inference using the QA pipeline
+            result = QAinference(model, tokenizer, question, context, device, usepipeline=True)
+            answer = result["answer"]
+            st.subheader("Answer:")
+            st.write(answer)
+        else:
+            st.warning("Please provide both a context and a question!")
+
+def load_metrics():
+    with open('./metrics/metrics_config1.json', 'r') as f:
+        metrics1 = json.load(f)
+
+    with open('./metrics/metrics_config2.json', 'r') as f:
+        metrics2 = json.load(f)
+
+    with open('./metrics/metrics_config3.json', 'r') as f:
+        metrics3 = json.load(f)
+
+    all_metrics = [metrics1, metrics2, metrics3]
+    return all_metrics
+
+def create_bar_graph(all_metrics):
+    exact_match_scores = [m['exact_match'] for m in all_metrics]
+    f1_scores = [m['f1'] for m in all_metrics]
+    configurations = ['distilbert-base-uncased', 'roberta-base-squad2', 'distilbert-base Trained']
+    bar_width = 0.35
+    x = np.arange(len(configurations))
+
+    fig, ax = plt.subplots()
+    bar1 = ax.bar(x - bar_width/2, exact_match_scores, bar_width, label='Exact Match')
+    bar2 = ax.bar(x + bar_width/2, f1_scores, bar_width, label='F1 Score')
+
+    ax.set_xlabel('Models')
+    ax.set_ylabel('Scores')
+    ax.set_title('Metrics Comparison Across Models')
+    ax.set_xticks(x)
+    ax.set_xticklabels(configurations)
+    ax.legend()
+    
+    output_path = "./metrics/graph/metrics_comparison.png" 
+    plt.tight_layout()
+    plt.savefig(output_path)
+
+
+# Cody Ourique added code
 
 if __name__ == "__main__":
     import argparse
@@ -621,8 +680,8 @@ if __name__ == "__main__":
     
     model.eval()
     
-
     run_test_qa(model,tokenizer,device)
+
     #Test QA
     # question = "How many programming languages does BLOOM support?"
     # context = "BLOOM has 176 billion parameters and can generate text in 46 languages natural languages and 13 programming languages."
@@ -657,7 +716,16 @@ if __name__ == "__main__":
     )
     print(metrics)
 
-    lauch_gradio_ui(model, tokenizer, device)
+    ## Save to a file
+    # with open('./metrics/metrics_config3.json', 'w') as f:
+    #     json.dump(metrics, f)
+
+    # Make bar graph
+    # all_metrics = load_metrics()
+    # create_bar_graph(all_metrics)
+
+    # launch_streamlit_ui(model, tokenizer, device)
+
     # answer_start_index = outputs.start_logits.argmax()
     # answer_end_index = outputs.end_logits.argmax()
     # predict_answer_tokens = input_ids[0, answer_start_index : answer_end_index + 1]
